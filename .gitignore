@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+dist/
+build/
+
+# Environment
+.env
+*.env.local
+
+# Node / React
+node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker
+*.log
+.docker/
+.dockerignore
+docker-compose.override.yml
+
+# GCP
+*.json.gcp
+service-account*.json

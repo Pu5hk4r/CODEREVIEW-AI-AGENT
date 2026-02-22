@@ -1,0 +1,68 @@
+# ─────────────────────────────────────────────────────────────────
+# docker-compose.yml — Full local development stack
+#
+# Services:
+#   api   — FastAPI app (hot-reload in dev)
+#   db    — PostgreSQL 16 with pgvector extension
+#
+# Usage:
+#   docker-compose up --build           # Start everything
+#   docker-compose up db                # DB only (run API locally)
+#   docker-compose logs -f api          # Watch API logs
+#   docker-compose down -v              # Stop + remove volumes
+# ─────────────────────────────────────────────────────────────────
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL + pgvector ────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: codereview_db
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       codereview
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── FastAPI App ───────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime          # Uses the production image
+    container_name: codereview_api
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override DB URL to use Docker network
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/codereview
+      APP_ENV: development
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hot reload: mount source code (dev only)
+      - ./backend/app:/app/app
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --log-level info
+
+volumes:
+  pgdata:
+    name: codereview_pgdata

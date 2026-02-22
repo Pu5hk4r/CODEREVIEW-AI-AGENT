@@ -1,0 +1,39 @@
+# Core API
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+
+# AI / LLM
+groq==0.11.0
+langgraph==0.2.53
+langchain==0.3.9
+langchain-groq==0.2.1
+langchain-core==0.3.21
+
+# GitHub
+PyGithub==2.5.0
+
+# RAG / Embeddings (local, no OpenAI needed)
+sentence-transformers==3.3.1
+numpy==1.26.4
+
+# Database
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+psycopg2-binary==2.9.10
+pgvector==0.3.6
+
+# Config / Utils
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+httpx==0.28.0
+
+# Observability (optional)
+langsmith==0.1.147
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+httpx==0.28.0
