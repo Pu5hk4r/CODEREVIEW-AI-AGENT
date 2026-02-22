@@ -60,7 +60,7 @@ def fetch_node(state: AgentState) -> AgentState:
 
     logger.info("📥 [fetch] Fetching PR #%s from %s", pr_number, repo_name)
 
-    if not settings.github_token or settings.app_env == "development":
+    if not settings.github_token:
         # Phase 1/3 fallback — mock data for local testing
         logger.warning("⚠️  No GITHUB_TOKEN — using mock PR data")
         state.update({

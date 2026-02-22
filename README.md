@@ -6,7 +6,7 @@ An AI agent that reviews Pull Requests like a senior engineer — powered by **G
 
 ## 🚀 Phased Build Plan
 
-| Phase | What you build | Checkpoint |
+| Phase | What I build | Checkpoint |
 |-------|---------------|------------|
 | **Phase 1** | Project setup + health endpoint | `GET /health` returns 200 |
 | **Phase 2** | GitHub webhook receiver | Webhook logs PR events |
