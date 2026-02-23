@@ -266,7 +266,7 @@ def _log_review(result: ReviewResult):
 
 
 def _persist_review(state: AgentState):
-    """Save review to in-memory store (replaced by DB in Phase 7)."""
+    """Save review to PostgreSQL database."""
     import uuid
     from datetime import datetime, timezone
     from app.api.reviews import add_review_to_store
@@ -275,21 +275,95 @@ def _persist_review(state: AgentState):
     if not result:
         return
 
-    add_review_to_store({
-        "id":             str(uuid.uuid4()),
-        "repo_name":      state.get("repo_name"),
-        "pr_number":      state.get("pr_number"),
-        "pr_title":       state.get("pr_title"),
-        "pr_author":      state.get("pr_author"),
-        "reviewed_at":    datetime.now(timezone.utc).isoformat(),
-        "approved":       result.approved,
-        "critical_count": result.critical_count,
-        "warning_count":  result.warning_count,
+    review_data = {
+        "id":               str(uuid.uuid4()),
+        "repo_name":        state.get("repo_name"),
+        "pr_number":        state.get("pr_number"),
+        "pr_title":         state.get("pr_title"),
+        "pr_author":        state.get("pr_author"),
+        "reviewed_at":      datetime.now(timezone.utc).isoformat(),
+        "approved":         result.approved,
+        "critical_count":   result.critical_count,
+        "warning_count":    result.warning_count,
         "suggestion_count": result.suggestion_count,
-        "summary":        result.summary,
-        "comments":       [c.model_dump() for c in result.comments],
-    })
+        "summary":          result.summary,
+        "comments":         [c.model_dump() for c in result.comments],
+    }
 
+    # Save to in-memory store
+    add_review_to_store(review_data)
+
+    # Save to PostgreSQL using thread
+    import threading
+    import asyncio
+
+    def run_in_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(_save_to_db(review_data, result))
+        finally:
+            loop.close()
+
+    thread = threading.Thread(target=run_in_thread)
+    thread.start()
+    thread.join()
+
+
+async def _save_to_db(review_data: dict, result):
+    """Saves review to PostgreSQL using raw asyncpg."""
+    try:
+        import asyncpg
+        conn = await asyncpg.connect(
+            host='localhost',
+            port=5433,
+            user='postgres',
+            password='postgres',
+            database='codereview'
+        )
+
+        await conn.execute("""
+            INSERT INTO reviews 
+            (id, repo_name, pr_number, pr_title, pr_author, reviewed_at, approved, critical_count, warning_count, suggestion_count, summary)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        """,
+            review_data["id"],
+            review_data["repo_name"],
+            review_data["pr_number"],
+            review_data["pr_title"],
+            review_data["pr_author"],
+            __import__('datetime').datetime.now(__import__('datetime').timezone.utc),
+            review_data["approved"],
+            review_data["critical_count"],
+            review_data["warning_count"],
+            review_data["suggestion_count"],
+            review_data["summary"],
+        )
+
+       
+
+        for c in result.comments:
+            import uuid
+            await conn.execute("""
+                INSERT INTO review_comments 
+                (id, review_id, file_path, line_number, severity, title, body, suggestion)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+            """,
+                str(uuid.uuid4()),
+                review_data["id"],
+                c.file_path,
+                c.line_number,
+                c.severity.value,
+                c.title,
+                c.body,
+                c.suggestion,
+            )
+
+        await conn.close()
+        logger.info("✅ Review saved to PostgreSQL")
+
+    except Exception as e:
+        logger.error("❌ DB save failed: %s", e)
 
 def _mock_diff() -> str:
     """Mock diff for Phase 1/3 testing without a real GitHub token."""
