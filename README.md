@@ -1,8 +1,13 @@
 # 🤖 CodeReview AI Agent
 
 An AI agent that reviews Pull Requests like a senior engineer — powered by **Groq** (Llama 3.1 70B), **LangGraph**, **FastAPI**, and **pgvector RAG**.
-
+# Dashboard
+![Dashboard1](https://github.com/Pu5hk4r/CODEREVIEW-AI-AGENT/blob/main/CodeReviewAgentDashboard.png)
+![Dashboard2](https://github.com/Pu5hk4r/CODEREVIEW-AI-AGENT/blob/main/CodeReviewAgentDashboard2.png)
 ---
+# Generate CODE Review PR
+![PR1](https://github.com/Pu5hk4r/CODEREVIEW-AI-AGENT/blob/main/CodeReviewAgent_PR1.png)
+![PR2](https://github.com/Pu5hk4r/CODEREVIEW-AI-AGENT/blob/main/CodeReviewAgentPR2.png)
 
 ## 🚀 Phased Build Plan
 
