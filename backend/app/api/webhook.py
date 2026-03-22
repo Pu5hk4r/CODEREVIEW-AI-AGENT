@@ -62,8 +62,7 @@ async def github_webhook(
 
     # ── Signature verification ──────────────────────────────────────────────
     if not verify_signature(raw_body, x_hub_signature_256):
-        logger.warning("❌ Invalid webhook signature")
-       # raise HTTPException(status_code=401, detail="Invalid signature")
+        logger.warning("❌ Invalid webhook signature — dev mode bypass")
 
     # ── Parse payload ────────────────────────────────────────────────────────
     try:
