@@ -4,7 +4,10 @@ app/github/pr_fetcher.py — Fetches PR diff, files, and metadata.
 PHASE 2/6 — Requires GITHUB_TOKEN env var.
 """
 import logging
+import ssl
+import urllib3
 from github import Github, GithubException
+from github import GithubRetry
 from app.config import get_settings
 
 settings = get_settings()
@@ -15,7 +18,16 @@ _gh_client = None
 def get_github_client() -> Github:
     global _gh_client
     if _gh_client is None:
-        _gh_client = Github(settings.github_token)
+        retry = GithubRetry(
+            total=10,
+            backoff_factor=2,
+            status_forcelist=[500, 502, 503, 504],
+        )
+        _gh_client = Github(
+            settings.github_token,
+            retry=retry,
+            timeout=30,
+        )
     return _gh_client
 
 
