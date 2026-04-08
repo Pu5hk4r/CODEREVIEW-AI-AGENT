@@ -1,57 +1,75 @@
 # 🤖 CodeReview AI Agent
 
-An AI agent that reviews Pull Requests like a senior engineer — powered by **Groq** (Llama 3.1 70B), **LangGraph**, **FastAPI**, and **pgvector RAG**.
+AI agent that reviews Pull Requests like a senior engineer using:
+- Groq (Llama 3.1 70B)
+- LangGraph
+- FastAPI
+- pgvector (RAG)
+
+---
+# Full Architecture
 ![](https://github.com/Pu5hk4r/CODEREVIEW-AI-AGENT/blob/main/GCP%20Production%20Review.png)
 
-═══════════════════════════════════════════════════════════════════════════════════════
-                              DATA FLOW SUMMARY
-═══════════════════════════════════════════════════════════════════════════════════════
-
-  1. Developer pushes bad code → opens PR on GitHub
-  2. GitHub fires webhook → POST /webhook (HMAC signed)
-  3. FastAPI verifies signature → returns 200 immediately
-  4. Background task → starts LangGraph agent
-  5. fetch_node → GitHub API → gets PR diff
-  6. analyze_node → pgvector → retrieves similar code chunks
-  7. review_node → Groq API → structured JSON review
-  8. post_node → GitHub API → posts comments on PR
-  9. post_node → PostgreSQL → saves review permanently
-  10. Dashboard → GET /reviews → shows all past reviews
-
-
-═══════════════════════════════════════════════════════════════════════════════════════
-                           GCP DEPLOYMENT ARCHITECTURE
-═══════════════════════════════════════════════════════════════════════════════════════
-
-  GitHub ──▶ Cloud Run ──▶ Cloud SQL (Postgres + pgvector)
-                │
-                ├──▶ Secret Manager (API keys)
-                │
-                ├──▶ Container Registry (Docker image)
-                │
-                └──▶ Groq API (external)
-                └──▶ GitHub API (external)
-
-
-  Cloud Run:
-    - Serverless — scales 0 to N automatically
-    - Deployed from Docker container
-    - Gets secrets from Secret Manager at runtime
-    - Health check: GET /health
-
-  Cloud SQL:
-    - Managed PostgreSQL
-    - pgvector extension enabled
-    - Private network with Cloud Run
-    - Automatic backups
-
-  Secret Manager:
-    - GROQ_API_KEY
-    - GITHUB_TOKEN
-    - GITHUB_WEBHOOK_SECRET
-    - DATABASE_URL
-    - Never in code or Dockerfile
 ---
+
+# 📊 DATA FLOW SUMMARY
+
+1. Developer pushes bad code → opens PR on GitHub  
+2. GitHub fires webhook → POST /webhook (HMAC signed)  
+3. FastAPI verifies signature → returns 200 immediately  
+4. Background task → starts LangGraph agent  
+
+5. fetch_node  
+   → GitHub API → gets PR diff  
+
+6. analyze_node  
+   → pgvector → retrieves similar code chunks  
+
+7. review_node  
+   → Groq API → structured JSON review  
+
+8. post_node  
+   → GitHub API → posts comments on PR  
+
+9. post_node  
+   → PostgreSQL → saves review permanently  
+
+10. Dashboard  
+   → GET /reviews → shows all past reviews  
+
+---
+
+---
+
+# ☁️ GCP DEPLOYMENT ARCHITECTURE
+
+GitHub → Cloud Run → Cloud SQL (Postgres + pgvector)
+
+Cloud Run:
+- Serverless — scales 0 to N automatically
+- Deployed from Docker container
+- Gets secrets from Secret Manager at runtime
+- Health check: GET /health
+
+Cloud SQL:
+- Managed PostgreSQL
+- pgvector extension enabled
+- Private network with Cloud Run
+- Automatic backups
+
+Secret Manager:
+- GROQ_API_KEY
+- GITHUB_TOKEN
+- GITHUB_WEBHOOK_SECRET
+- DATABASE_URL
+- Never stored in code or Dockerfile
+
+External Services:
+- Groq API
+- GitHub API
+
+---
+
 # Dashboard
 ![Dashboard1](https://github.com/Pu5hk4r/CODEREVIEW-AI-AGENT/blob/main/CodeReviewAgentDashboard.png)
 ![Dashboard2](https://github.com/Pu5hk4r/CODEREVIEW-AI-AGENT/blob/main/CodeReviewAgentDashboard2.png)
@@ -90,194 +108,214 @@ An AI agent that reviews Pull Requests like a senior engineer — powered by **G
 | Deploy | Docker + GCP Cloud Run |
 
 ---
-## Testing - Testing Strategy — Phase by Phase (Before GCP Deployment)
-Phase 1 → test_phase1.py  — server health
-Phase 2 → test_phase2.py  — webhook signature
-Phase 3 → manual          — Groq response
-Phase 4 → manual          — agent pipeline
-Phase 5 → check_db.py     — database tables
-Phase 6 → real GitHub PR  — end to end
-Phase 7 → check_db.py     — data persistence
-Phase 8 → browser         — dashboard UI
+# 🧪 TESTING STRATEGY (PHASE-WISE)
+
+Phase 1 → test_phase1.py  — server health  
+Phase 2 → test_phase2.py  — webhook signature  
+Phase 3 → manual          — Groq response  
+Phase 4 → manual          — agent pipeline  
+Phase 5 → check_db.py     — database tables  
+Phase 6 → real GitHub PR  — end-to-end  
+Phase 7 → check_db.py     — data persistence  
+Phase 8 → browser         — dashboard UI  
+
 ---
-## End-to-End Testing (full flow) 
-Real PR opened on GitHub
-         ↓
-Webhook received
-         ↓
-Agent completed all 4 nodes
-         ↓
-Comment appeared on GitHub PR
-         ↓
-Review saved in PostgreSQL
-         ↓
-Dashboard showed review
+# 🔁 END-TO-END FLOW
+
+PR opened on GitHub  
+→ Webhook received  
+→ Agent completed all 4 nodes  
+→ Comment posted on PR  
+→ Review saved in PostgreSQL  
+→ Dashboard shows review  
 
 ---
 
-## Manual Testing — Real PR Flow
-Step 1: Created auth.py with known vulnerabilities
-        - SQL injection (line 5)
-        - Hardcoded secret (line 1)
-        - No connection close
+# 🧪 MANUAL TESTING (REAL PR)
 
-Step 2: Pushed to feature/bad-code-v2 branch
+Step 1:
+Created auth.py with vulnerabilities:
+- SQL injection (line 5)
+- Hardcoded secret (line 1)
+- No DB connection close
 
-Step 3: Opened PR on GitHub
+Step 2:
+Pushed to feature/bad-code-v2 branch  
 
-Step 4: Verified webhook received (ngrok logs)
+Step 3:
+Opened PR on GitHub  
 
-Step 5: Verified agent ran all 4 nodes (server logs)
+Step 4:
+Verified webhook received (ngrok logs)  
 
-Step 6: Verified Groq found the SQL injection
+Step 5:
+Verified agent ran all nodes (server logs)  
 
-Step 7: Verified comment appeared on GitHub PR
+Step 6:
+Verified Groq detected SQL injection  
 
-Step 8: Verified review saved in PostgreSQL
+Step 7:
+Verified comment on PR  
 
-Step 9: Verified dashboard showed correct counts
+Step 8:
+Verified review saved in PostgreSQL  
+
+Step 9:
+Verified dashboard data  
+
 ---
-## Performance Metrics
-### Latency Metrics (measured during testing)
-Operation                    Time        How Measured
-────────────────────────────────────────────────────
-Webhook receive + return 200  <100ms     ngrok logs
-GitHub fetch PR diff          2-3s       server logs timestamp
-RAG vector retrieval          <100ms     server logs timestamp
-Groq LLM inference            2-5s       httpx logs
-GitHub post comment           1-2s       server logs timestamp
-PostgreSQL save               <500ms     server logs timestamp
-────────────────────────────────────────────────────
-TOTAL end to end              ~30-60s    wall clock time
 
-### Throughput Metrics
-Groq free tier limit:    30 requests/minute
-Our usage:               1 review per PR
-Concurrent reviews:      Limited by Groq rate limit
-Max PRs per hour:        ~30 (Groq limit)
+# 📈 PERFORMANCE METRICS
 
-### Accuracy Metrics (manual evaluation)
-Test PRs created: 3
-Known issues planted: 4
-Issues found by Groq: 3/4 (75%)
+## Latency Metrics
 
-Issue 1: SQL Injection          → ✅ Found (CRITICAL)
-Issue 2: Hardcoded Secret       → ✅ Found (CRITICAL)
-Issue 3: No DB connection close → ✅ Found (SUGGESTION)
-Issue 4: No input validation    → ❌ Missed
+Webhook receive + return 200  → <100ms  
+GitHub fetch PR diff          → 2–3s  
+RAG retrieval                 → <100ms  
+Groq inference                → 2–5s  
+GitHub post comment           → 1–2s  
+PostgreSQL save               → <500ms  
 
-### Reliability Metrics
-Webhooks received:  5
-Webhooks processed: 5
-Success rate:       100%
+TOTAL end-to-end              → ~30–60s  
 
-Reviews completed:  3
-Reviews failed:     0
-DB saves:           3/3
-GitHub posts:       3/3
+---
 
-### 1. Functional Evaluation
-✅ Does webhook receive events?        → Yes
-✅ Does signature verify correctly?    → Yes
-✅ Does agent complete all 4 nodes?    → Yes
-✅ Does Groq find real issues?         → Yes (75%)
-✅ Does comment appear on GitHub PR?   → Yes
-✅ Does DB save persist?               → Yes
-✅ Does dashboard show data?           → Yes
+## Throughput Metrics
 
-### 2. LLM Output Quality Evaluation
-1. Correct severity classification
-   CRITICAL for SQL injection ✅
-   WARNING for missing functionality ✅
-   SUGGESTION for minor improvements ✅
+Groq free tier limit: 30 req/min  
+Usage: 1 review per PR  
+Max PRs/hour: ~30  
 
-2. Accurate line numbers
-   SQL injection at line 5 → Groq said line 5 ✅
+---
 
-3. Actionable fix suggestions
-   Groq gave exact parameterized query fix ✅
+## Accuracy Metrics
 
-4. No hallucinations
-   Groq reviewed only what was in diff ✅
-   Did not invent issues ✅
-   
-### 3. Prompt evaluation:
-I tested 3 prompt versions:
+Test PRs: 3  
+Issues planted: 4  
+Issues found: 3/4 (75%)
 
-V1: Simple — "review this code"
-    Result: vague feedback, no structure
+- SQL Injection → Found  
+- Hardcoded Secret → Found  
+- No DB close → Found  
+- Input validation → Missed  
 
-V2: Structured — "return JSON with severity"
-    Result: correct structure, occasional uppercase
+Precision: 100%  
+Recall: 75%  
 
-V3: Final — strict JSON schema + examples
-    Result: consistent, parseable, accurate
-    
-### 4. Error Handling Evaluation
-Scenario                          Result
-──────────────────────────────────────────────
-Empty PR diff                     ✅ Handled gracefully
-Wrong webhook secret              ✅ Returns 401
-Groq returns malformed JSON       ✅ Caught + logged
-asyncio event loop conflict       ✅ Fixed with threading
-Port conflict (5432)              ✅ Resolved with 5433
-Uppercase severity from Groq      ✅ Fixed with .lower()
+---
 
-### 5. System Reliability Evaluation
-What I monitored:
-- Server logs (uvicorn + custom loggers)
-- ngrok HTTP request logs
-- PostgreSQL row counts
-- GitHub PR comments
+## Reliability Metrics
 
-Log levels used:
-INFO    → normal flow
-WARNING → non-critical issues
-ERROR   → failures needing attention
+Webhooks received: 5  
+Processed: 5  
 
+Reviews completed: 3  
+Failures: 0  
 
-### 6. Automated Test Suite
-#### pytest test suite
+DB saves: 3/3  
+GitHub posts: 3/3  
+
+---
+
+# ✅ FUNCTIONAL EVALUATION
+
+- Webhook receive → Yes  
+- Signature verification → Yes  
+- Agent execution → Yes  
+- Issue detection → Yes (75%)  
+- PR comments → Yes  
+- DB persistence → Yes  
+- Dashboard → Yes  
+
+---
+
+# 🧠 LLM OUTPUT QUALITY
+
+- Correct severity classification  
+- Accurate line numbers  
+- Actionable fixes  
+- No hallucinations  
+
+---
+
+# 🧪 PROMPT EVALUATION
+
+V1 → vague output  
+V2 → structured but inconsistent  
+V3 → strict JSON → stable + accurate  
+
+---
+
+# ⚠️ ERROR HANDLING
+
+- Empty PR → handled  
+- Wrong webhook secret → 401  
+- Malformed JSON → logged  
+- Async issues → fixed  
+- Port conflict → resolved  
+- Uppercase severity → normalized  
+
+---
+
+# 📊 SYSTEM RELIABILITY MONITORING
+
+Monitored:
+- Server logs
+- ngrok logs
+- PostgreSQL data
+- GitHub comments  
+
+Log levels:
+- INFO  
+- WARNING  
+- ERROR  
+
+---
+
+# 🧪 AUTOMATED TEST SUITE
+
 tests/
-├── test_webhook.py      # signature verification
-├── test_agent.py        # LangGraph nodes
-├── test_groq.py         # LLM output parsing
-├── test_github.py       # PR fetch + post
-├── test_db.py           # CRUD operations
-└── test_e2e.py          # full pipeline
+- test_webhook.py
+- test_agent.py
+- test_groq.py
+- test_github.py
+- test_db.py
+- test_e2e.py
 
-## 7. Monitoring (GCP)
-#### Request Latency per endpoint
-  - Error rate
-  - CPU/memory per Cloud Run instance
-
-#### Cloud Logging:
-  - Structured logs from FastAPI
-  - Alert on ERROR level logs
-
-#### Custom metrics:
-  - Reviews per hour
-  - Critical issues found per day
-  - Average review time
-
-  - 
-### 8. LLM Evaluation Framework
-#### Golden dataset:
-  - 20 PRs with known issues
-  - Expected: issue type, severity, line number
-
-#### Metrics:
-  - Precision: found issues that are real
-  - Recall: found all issues that exist
-  - F1 Score: balance of both
-  - Hallucination rate: invented issues
-
-#### Current manual result:
-  Precision: 100% (no false positives)
-  Recall:    75%  (missed 1 of 4 issues)
 ---
 
-## ⚙️ Environment Variables
+# ☁️ GCP MONITORING
+
+- Request latency
+- Error rate
+- CPU/memory usage
+
+Custom metrics:
+- Reviews/hour
+- Critical issues/day
+- Avg review time  
+
+---
+
+# 🧠 LLM EVALUATION FRAMEWORK
+
+Dataset:
+- 20 PRs with known issues  
+
+Metrics:
+- Precision  
+- Recall  
+- F1 Score  
+- Hallucination rate  
+
+Current:
+- Precision: 100%  
+- Recall: 75%  
+
+---
+
+
+# ⚙️ Environment Variables
 
 ```env
 # Required from Phase 1
@@ -296,7 +334,7 @@ LANGSMITH_API_KEY=ls__...
 
 ---
 
-## 🏃 Quick Start
+# 🏃 Quick Start
 
 ```bash
 # Clone and setup
