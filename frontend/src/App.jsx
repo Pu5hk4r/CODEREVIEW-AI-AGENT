@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const API = "http://localhost:8000";
+const API = "https://codereview-backend-668034153514.asia-south1.run.app/reviews";
 
 const SEVERITY_COLOR = {
   critical:   { bg: "#ff47571a", border: "#ff4757", text: "#ff4757", icon: "🔴" },
