@@ -93,7 +93,7 @@ export default function App() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API}/reviews`)
+    fetch(API)
       .then(r => r.json())
       .then(d => { setReviews(d.reviews || []); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
@@ -137,8 +137,7 @@ export default function App() {
             {!loading && !error && reviews.length === 0 && (
               <div style={{ color: "#666", fontSize: 12, lineHeight: 2 }}>
                 No reviews yet.<br/>
-                Open a PR to trigger a review,<br/>
-                or run: python scripts/test_phase4.py
+                Open a PR to trigger a review.
               </div>
             )}
 
