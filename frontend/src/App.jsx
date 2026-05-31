@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-const API = "https://codereview-backend-668034153514.asia-south1.run.app/reviews";
+// const API = "https://codereview-backend-668034153514.asia-south1.run.app/reviews";
+
+const API = "http://localhost:8000/reviews";
 
 const SEVERITY_COLOR = {
-  critical:   { bg: "#ff47571a", border: "#ff4757", text: "#ff4757", icon: "🔴" },
-  warning:    { bg: "#ffd60a1a", border: "#ffd60a", text: "#ffd60a", icon: "🟡" },
+  critical: { bg: "#ff47571a", border: "#ff4757", text: "#ff4757", icon: "🔴" },
+  warning: { bg: "#ffd60a1a", border: "#ffd60a", text: "#ffd60a", icon: "🟡" },
   suggestion: { bg: "#00e5ff1a", border: "#00e5ff", text: "#00e5ff", icon: "🔵" },
 };
 
@@ -101,7 +103,7 @@ export default function App() {
 
   const totalCritical = reviews.reduce((s, r) => s + (r.critical_count || 0), 0);
   const totalWarnings = reviews.reduce((s, r) => s + (r.warning_count || 0), 0);
-  const approved      = reviews.filter(r => r.approved).length;
+  const approved = reviews.filter(r => r.approved).length;
 
   return (
     <div style={{ background: "#0f0f0f", minHeight: "100vh", color: "#f0f0f0", fontFamily: "'IBM Plex Mono', monospace" }}>
@@ -117,10 +119,10 @@ export default function App() {
 
         {/* Stats */}
         <div style={{ display: "flex", gap: 12, marginBottom: 32, flexWrap: "wrap" }}>
-          <StatCard label="TOTAL REVIEWS"    value={reviews.length} />
-          <StatCard label="APPROVED"         value={approved}         color="#00ff88" />
-          <StatCard label="CRITICAL ISSUES"  value={totalCritical}    color="#ff4757" />
-          <StatCard label="WARNINGS"         value={totalWarnings}    color="#ffd60a" />
+          <StatCard label="TOTAL REVIEWS" value={reviews.length} />
+          <StatCard label="APPROVED" value={approved} color="#00ff88" />
+          <StatCard label="CRITICAL ISSUES" value={totalCritical} color="#ff4757" />
+          <StatCard label="WARNINGS" value={totalWarnings} color="#ffd60a" />
         </div>
 
         {/* Main content */}
@@ -133,10 +135,10 @@ export default function App() {
             </div>
 
             {loading && <div style={{ color: "#666", fontSize: 12 }}>Loading reviews...</div>}
-            {error   && <div style={{ color: "#ff4757", fontSize: 12 }}>Error: {error}<br/>Make sure the API is running at {API}</div>}
+            {error && <div style={{ color: "#ff4757", fontSize: 12 }}>Error: {error}<br />Make sure the API is running at {API}</div>}
             {!loading && !error && reviews.length === 0 && (
               <div style={{ color: "#666", fontSize: 12, lineHeight: 2 }}>
-                No reviews yet.<br/>
+                No reviews yet.<br />
                 Open a PR to trigger a review.
               </div>
             )}

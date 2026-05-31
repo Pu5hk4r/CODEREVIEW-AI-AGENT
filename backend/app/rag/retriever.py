@@ -18,7 +18,12 @@ def retrieve_context(diff: str, top_k: int = 3) -> str:
     Raises an exception if DB is not available (handled by analyze_node).
     """
     import asyncio
-    return asyncio.run(_async_retrieve(diff, top_k))
+    coro = _async_retrieve(diff, top_k)
+    try:
+        return asyncio.run(coro)
+    except RuntimeError:
+        coro.close()
+        raise
 
 
 async def _async_retrieve(diff: str, top_k: int) -> str:

@@ -8,6 +8,7 @@ Each node receives AgentState, mutates it, returns updated state.
 import json
 import logging
 from typing import Any
+from langsmith import traceable
 
 from app.agent.state import AgentState
 from app.agent.prompts import (
@@ -32,6 +33,7 @@ def get_groq_client():
     return _groq_client
 
 
+@traceable(name="Groq Chat Completion")
 def groq_chat(system: str, user: str, temperature: float = 0.1) -> str:
     """Single Groq chat completion — returns raw text."""
     client = get_groq_client()
@@ -48,6 +50,7 @@ def groq_chat(system: str, user: str, temperature: float = 0.1) -> str:
 
 
 # ── NODE 1: fetch_node ────────────────────────────────────────────────────────
+@traceable(name="Fetch PR Node")
 def fetch_node(state: AgentState) -> AgentState:
     """
     Fetches PR diff, title, author, and changed files from GitHub.
@@ -85,6 +88,7 @@ def fetch_node(state: AgentState) -> AgentState:
 
 
 # ── NODE 2: analyze_node ──────────────────────────────────────────────────────
+@traceable(name="Analyze PR Node")
 def analyze_node(state: AgentState) -> AgentState:
     """
     Summarises what changed per file + retrieves RAG context.
@@ -126,6 +130,7 @@ def analyze_node(state: AgentState) -> AgentState:
 
 
 # ── NODE 3: review_node ───────────────────────────────────────────────────────
+@traceable(name="Review Node")
 def review_node(state: AgentState) -> AgentState:
     """
     Calls Groq with the full diff + context to generate structured review.
@@ -199,6 +204,7 @@ def review_node(state: AgentState) -> AgentState:
 
 
 # ── NODE 4: post_node ─────────────────────────────────────────────────────────
+@traceable(name="Post Review Node")
 def post_node(state: AgentState) -> AgentState:
     """
     Posts the review result as GitHub PR comments.

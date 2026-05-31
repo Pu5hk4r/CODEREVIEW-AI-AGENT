@@ -46,4 +46,14 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Cached settings instance — call get_settings() anywhere."""
-    return Settings()
+    settings = Settings()
+    
+    # Auto-configure LangSmith tracing environment variables if API key is provided
+    if settings.langsmith_api_key and settings.langsmith_api_key != "ls__your_key_here":
+        import os
+        os.environ["LANGCHAIN_TRACING_V2"] = "true"
+        os.environ["LANGCHAIN_API_KEY"] = settings.langsmith_api_key
+        os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project
+        
+    return settings
+
